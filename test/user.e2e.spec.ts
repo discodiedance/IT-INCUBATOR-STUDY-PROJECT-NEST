@@ -1,7 +1,7 @@
+import { AppModule } from '../src/app.module';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '../../src/app.module';
 
 const userRouter = '/users';
 let getHttpServer: any;
@@ -68,14 +68,14 @@ describe('UserController (e2e)', () => {
         items: [
           {
             id: expect.any(String),
-            login: 'user1',
-            email: 'user1@gmail.com',
+            login: 'user2',
+            email: 'user2@gmail.com',
             createdAt: expect.any(String),
           },
           {
             id: expect.any(String),
-            login: 'user2',
-            email: 'user2@gmail.com',
+            login: 'user1',
+            email: 'user1@gmail.com',
             createdAt: expect.any(String),
           },
         ],

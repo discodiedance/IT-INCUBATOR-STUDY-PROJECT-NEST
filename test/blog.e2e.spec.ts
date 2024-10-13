@@ -1,7 +1,7 @@
+import { AppModule } from '../src/app.module';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from '../../src/app.module';
 
 const blogRouter = '/blogs';
 let getHttpServer: any;
@@ -23,6 +23,7 @@ describe('BlogController (e2e)', () => {
     beforeAll(async () => {
       await getHttpServer.delete('/testing/all-data');
     });
+
     it('POST: CREATE BLOG1, STATUS: 201', async () => {
       const response = await getHttpServer
         .post(blogRouter)
