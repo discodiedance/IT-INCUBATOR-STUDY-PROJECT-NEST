@@ -1,7 +1,8 @@
-import { OutputUserType } from './../../users/api/models/output';
+import { OutputUserType } from '../../users/api/models/dto/output';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ObjectId } from 'mongodb';
 import { CreateCommentDataType } from '../api/models/comment.dto';
+import { CommentDocument } from '../api/models/comment.entities';
 
 @Schema({ id: false, versionKey: false })
 class CommentatorInfo {
@@ -35,21 +36,21 @@ export class Comment {
   @Prop({ type: Object, required: true })
   likesInfo: CommentLikesInfo;
 
-  static createComment(newComment: CreateCommentDataType) {
-    const comment = new this();
+  // static createComment(newComment: CreateCommentDataType): CommentDocument {
+  //   const comment = new this();
 
-    comment.id = new ObjectId().toString();
-    comment.content = newComment.content;
-    comment.commentatorInfo = newComment.commentatorInfo;
-    comment.createdAt = new Date().toISOString();
-    comment.postId = newComment.postId;
-    comment.likesInfo = {
-      likesCount: 0,
-      dislikesCount: 0,
-    };
+  //   comment.id = new ObjectId().toString();
+  //   comment.content = newComment.content;
+  //   comment.commentatorInfo = newComment.commentatorInfo;
+  //   comment.createdAt = new Date().toISOString();
+  //   comment.postId = newComment.postId;
+  //   comment.likesInfo = {
+  //     likesCount: 0,
+  //     dislikesCount: 0,
+  //   };
 
-    return comment;
-  }
+  //   return comment ;
+  // }
 
   updateComment(content: string) {
     this.content = content;
@@ -91,9 +92,9 @@ export class Comment {
 
 export const CommentSchema = SchemaFactory.createForClass(Comment);
 
-CommentSchema.statics = {
-  createComment: Comment.createComment,
-};
+// CommentSchema.statics = {
+//   createComment: Comment.createComment,
+// };
 
 CommentSchema.methods = {
   updateComment: Comment.prototype.updateComment,

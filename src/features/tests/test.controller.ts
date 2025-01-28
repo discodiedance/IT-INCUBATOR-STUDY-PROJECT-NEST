@@ -1,4 +1,4 @@
-import { Controller, Delete, HttpStatus, Res } from '@nestjs/common';
+import { Controller, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from '../users/application/user.entity';
 import { UserModelType } from '../users/api/models/user.enitities';
@@ -25,15 +25,14 @@ export class TestingController {
     @InjectModel(PostLikes.name) private PostLikesModel: PostLikesModelType,
   ) {}
 
-  @Delete('/all-data')
-  async deleteAllData(@Res() res) {
+  @Delete('all-data')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteAllData() {
     await this.UserModel.deleteMany({});
     await this.BlogModel.deleteMany({});
     await this.PostModel.deleteMany({});
     await this.CommentModel.deleteMany({});
     await this.CommentLikesModel.deleteMany({});
     await this.PostLikesModel.deleteMany({});
-    res.status(HttpStatus.NO_CONTENT).send();
-    return;
   }
 }

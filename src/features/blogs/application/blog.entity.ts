@@ -4,6 +4,7 @@ import {
   CreateBlogDataType,
   UpdateBlogDataType,
 } from '../api/models/blogs.dto';
+import { BlogDocument } from '../api/models/blogs.entities';
 
 @Schema()
 export class Blog {
@@ -25,7 +26,7 @@ export class Blog {
   @Prop({ type: Boolean, required: true, default: false })
   isMembership: boolean;
 
-  static createBlog(newBlog: CreateBlogDataType) {
+  static createBlog(newBlog: CreateBlogDataType): BlogDocument {
     const blog = new this();
 
     blog.id = new ObjectId().toString();
@@ -35,7 +36,7 @@ export class Blog {
     blog.createdAt = new Date().toISOString();
     blog.isMembership = false;
 
-    return blog;
+    return blog as BlogDocument;
   }
 
   updateBlog(updateData: UpdateBlogDataType) {

@@ -3,68 +3,102 @@ import {
   Controller,
   Delete,
   Get,
-  HttpStatus,
+  HttpCode,
   Param,
   Post,
   Query,
-  Res,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 
 import {
+  GetUsersQueryParams,
   InputCreateUserAccountDataType,
-  InputUserSortDataUserType,
-} from './models/input';
+} from './models/dto/input';
 import { UserService } from '../application/user.service';
-import { QueryUserRepository } from '../infrastructure/user-query.repository';
-import { UserRepository } from './../infrastructure/user.repository';
-import { UserSortDataUserType } from './models/users.dto';
+import { QueryUserRepository } from '../infrastructure/user.query.repository';
+import { PaginatedViewDto } from '../../../core/dto/base.paginated.view-dto';
+import { OutputUserType } from './models/dto/output';
+import { ApiBasicAuth, ApiParam } from '@nestjs/swagger';
+import { BasicAuthGuard } from '../../../core/guards/basic/basic-auth.guard';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @Controller('users')
+@UseGuards(BasicAuthGuard)
+@ApiBasicAuth('basicAuth')
 export class UserController {
   constructor(
     private readonly UserService: UserService,
     private readonly QueryUserRepository: QueryUserRepository,
-    private readonly UserRepository: UserRepository,
   ) {}
 
   @Get()
-  async getUsers(@Query() query: InputUserSortDataUserType, @Res() res) {
-    const sortData: UserSortDataUserType = {
-      sortBy: query.sortBy,
-      sortDirection: query.sortDirection,
-      pageNumber: query.pageNumber,
-      pageSize: query.pageSize,
-      searchLoginTerm: query.searchLoginTerm,
-      searchEmailTerm: query.searchEmailTerm,
-    };
-    const allUsers = await this.QueryUserRepository.getAll(sortData);
-    res.status(HttpStatus.OK).send(allUsers);
-    return;
+  @ApiParam({
+    name: 'sortBy',
+    type: 'string',
+    example: 'createdAt',
+    description: "Default value: 'createdAt'",
+    required: false,
+  })
+  @ApiParam({
+    name: 'sortDirection',
+    type: 'string',
+    example: 'desc',
+    required: false,
+  })
+  @ApiParam({
+    name: 'pageNumber',
+    type: 'integer($int32)',
+    example: 1,
+    description: 'pageNumber is number of portions that should be returned',
+    required: false,
+  })
+  @ApiParam({
+    name: 'pageSize',
+    type: 'integer($int32)',
+    example: '10',
+    description: 'pageSize is portions size that should be returned',
+    required: false,
+  })
+  @ApiParam({
+    name: 'searchLoginTerm',
+    type: 'string',
+    example: 'searchLoginTerm',
+    description:
+      'Search term for user Login: Login should contains this term in any position <br>' +
+      'Default value: null',
+    required: false,
+  })
+  @ApiParam({
+    name: 'searchEmailTerm',
+    type: 'string',
+    example: 'searchEmailTerm',
+    description:
+      'Search term for user Email: Email should contains this term in any position <br>' +
+      'Default value: null',
+    required: false,
+  })
+  async getUsers(
+    @Query() query: GetUsersQueryParams,
+  ): Promise<PaginatedViewDto<OutputUserType[]>> {
+    const allUsers = await this.QueryUserRepository.getAll(query);
+    return allUsers;
   }
 
   @Post()
+  @HttpCode(201)
   async createUser(
     @Body() inputCreateUserData: InputCreateUserAccountDataType,
-    @Res() res,
-  ) {
+  ): Promise<OutputUserType | null> {
     const user = await this.UserService.createUser(inputCreateUserData);
-    res.status(HttpStatus.CREATED).send(user);
-    return;
+    const mappedUser = OutputUserType.mapToView(user);
+    return mappedUser;
   }
 
   @Delete(':id')
-  async deleteUser(@Param('id') id: string, @Res() res) {
-    const user = await this.QueryUserRepository.getById(id);
-    if (!user) {
-      res.status(HttpStatus.NOT_FOUND).send();
-      return;
-    }
-    const result = await this.UserRepository.delete(id);
-    if (!result) {
-      res.status(HttpStatus.BAD_REQUEST).send();
-      return;
-    }
-    res.status(HttpStatus.NO_CONTENT).send();
-    return;
+  @HttpCode(204)
+  async deleteUser(@Param('id') id: string) {
+    return await this.UserService.deleteUser(id);
   }
 }

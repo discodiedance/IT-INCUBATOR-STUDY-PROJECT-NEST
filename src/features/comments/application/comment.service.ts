@@ -1,4 +1,4 @@
-import { OutputUserType } from './../../users/api/models/output';
+import { OutputUserType } from '../../users/api/models/dto/output';
 import { Injectable } from '@nestjs/common';
 import { UpdateCommentDataType } from '../api/models/comment.dto';
 import { CommentDocument } from '../api/models/comment.entities';

@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ObjectId } from 'mongodb';
 import { CreatePostDataType, UpdatePostDataType } from '../api/models/post.dto';
+import { PostDocument } from '../api/models/post.entities';
 
 @Schema({ id: false, versionKey: false })
 class PostLikesInfo {
@@ -41,7 +42,7 @@ export class Post {
   @Prop({ type: Object, required: true })
   likesInfo: PostLikesInfo;
 
-  static createPost(newPost: CreatePostDataType) {
+  static createPost(newPost: CreatePostDataType): PostDocument {
     const post = new this();
 
     post.id = new ObjectId().toString();
@@ -57,7 +58,7 @@ export class Post {
       newestLikes: [],
     };
 
-    return post;
+    return post as PostDocument;
   }
 
   updatePost(updateData: UpdatePostDataType) {

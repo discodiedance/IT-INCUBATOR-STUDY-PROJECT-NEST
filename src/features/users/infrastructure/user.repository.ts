@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserDocument, UserModelType } from '../api/models/user.enitities';
 import { User } from '../application/user.entity';
+import { NotFoundDomainException } from '../../../core/exceptions/domain-exceptions';
 
 @Injectable()
 export class UserRepository {
@@ -20,8 +21,20 @@ export class UserRepository {
     const user = await this.UserModel.findOne({
       'accountData.email': email,
     });
+
     if (!user) {
-      return null;
+      null;
+    }
+    return user;
+  }
+
+  async getByLogin(login: string): Promise<UserDocument | null> {
+    const user = await this.UserModel.findOne({
+      'accountData.login': login,
+    });
+
+    if (!user) {
+      null;
     }
     return user;
   }
@@ -43,6 +56,11 @@ export class UserRepository {
         },
       ],
     });
+
+    if (!user) {
+      return null;
+    }
+
     return user;
   }
 
@@ -52,6 +70,11 @@ export class UserRepository {
     const user = await this.UserModel.findOne({
       'emailConfirmation.confirmationCode': emailConfirmationCode,
     });
+
+    if (!user) {
+      return null;
+    }
+
     return user;
   }
 
@@ -61,9 +84,32 @@ export class UserRepository {
     const user = await this.UserModel.findOne({
       'passwordRecoveryConfirmation.recoveryCode': recoveryCode,
     });
+
+    if (!user) {
+      null;
+    }
+    return user;
+  }
+
+  async getById(id: string): Promise<UserDocument | null> {
+    const user = await this.UserModel.findOne({ id: id });
+    if (!user) {
+      null;
+    }
+    return user;
+  }
+
+  async findByLogin(login: string): Promise<UserDocument | null> {
+    return this.UserModel.findOne({ login });
+  }
+
+  async findOrNotFoundFail(userId: string): Promise<UserDocument | null> {
+    const user = await this.getById(userId);
+
     if (!user) {
       return null;
     }
+
     return user;
   }
 }

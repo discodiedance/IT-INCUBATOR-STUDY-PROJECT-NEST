@@ -1,4 +1,4 @@
-import { OutputUserType } from './../../../users/api/models/output';
+import { OutputUserType } from '../../../users/api/models/dto/output';
 import { Model, HydratedDocument } from 'mongoose';
 import { Comment } from '../../application/comment.entity';
 import { CreateCommentDataType, UpdateCommentDataType } from './comment.dto';

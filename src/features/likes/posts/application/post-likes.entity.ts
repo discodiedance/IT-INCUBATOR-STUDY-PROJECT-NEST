@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ObjectId } from 'mongodb';
 import { CreatePostLikeData } from '../api/models/post-likes.dto';
+import { PostLikesDocument } from '../api/models/post-likes.entities';
 
 @Schema()
 export class PostLikes {
@@ -28,7 +29,7 @@ export class PostLikes {
   @Prop({ type: Boolean, required: true, default: false })
   isDeleted: boolean;
 
-  static createLike(newLike: CreatePostLikeData) {
+  static createLike(newLike: CreatePostLikeData): PostLikesDocument {
     const likeData = new this();
 
     likeData.id = new ObjectId().toString();
@@ -40,7 +41,7 @@ export class PostLikes {
     likeData.isFirstReaction = true;
     likeData.isDeleted = false;
 
-    return likeData;
+    return likeData as PostLikesDocument;
   }
 
   updateToDeletedLikeOrDislike() {

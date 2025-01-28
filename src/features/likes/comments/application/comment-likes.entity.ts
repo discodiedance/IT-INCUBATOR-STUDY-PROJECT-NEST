@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ObjectId } from 'mongodb';
 import { CreateCommentLikeData } from '../api/models/comment-likes.dto';
+import { CommentLikesDocument } from '../api/models/comment-likes.entities';
 
 @Schema()
 export class CommentLikes {
@@ -19,7 +20,7 @@ export class CommentLikes {
   @Prop({ type: String, required: true })
   parentId: string;
 
-  static createLike(newLike: CreateCommentLikeData) {
+  static createLike(newLike: CreateCommentLikeData): CommentLikesDocument {
     const likeData = new this();
 
     likeData.id = new ObjectId().toString();
@@ -27,7 +28,7 @@ export class CommentLikes {
     likeData.createdAt = new Date().toISOString();
     likeData.status = newLike.likeStatus;
     likeData.parentId = newLike.parentId;
-    return likeData;
+    return likeData as CommentLikesDocument;
   }
 
   isLikeDataEqualsLike() {
