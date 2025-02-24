@@ -5,12 +5,12 @@ export const ExtractUserIdFromRequest = createParamDecorator(
   (data: unknown, context: ExecutionContext): string => {
     const request = context.switchToHttp().getRequest();
 
-    const user = request.user;
+    const userId = request.user;
 
-    if (!user) {
+    if (!userId) {
       throw NotFoundDomainException.create('There is no user in request');
     }
 
-    return user.userId;
+    return userId;
   },
 );

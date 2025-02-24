@@ -1,23 +1,19 @@
-// import { ExecutionContext, Injectable } from '@nestjs/common';
-// import { AuthGuard } from '@nestjs/passport';
+import { ExecutionContext, Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
-// @Injectable()
-// export class JwtOptionalAuthGuard extends AuthGuard('jwt') {
-//   canActivate(context: ExecutionContext) {
-//     return super.canActivate(context);
-//   }
+@Injectable()
+export class JwtOptionalAuthGuard extends AuthGuard('jwt') {
+  canActivate(context: ExecutionContext) {
+    return super.canActivate(context);
+  }
 
-//   handleRequest(
-//     err: any,
-//     user: any,
-//     info: any,
-//     context: ExecutionContext,
-//     status?: any,
-//   ) {
-//     if (err || !user) {
-//       return null;
-//     } else {
-//       return user;
-//     }
-//   }
-// }
+  handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+    const request = context.switchToHttp().getRequest();
+
+    if (!request.headers.authorization && user) {
+      return null;
+    }
+
+    return user;
+  }
+}

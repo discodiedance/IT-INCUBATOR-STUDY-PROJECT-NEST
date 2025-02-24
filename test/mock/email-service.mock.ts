@@ -1,9 +1,11 @@
-import { EmailService } from '../../src/features/notifications/email.service';
+import { NotificationsService } from '../../src/features/notifications/notifications.service';
 
-export class EmailServiceMock extends EmailService {
+export class EmailServiceMock extends NotificationsService {
   async sendConfirmationEmail(email: string, code: string): Promise<void> {
-    console.log('Call mock method sendConfirmationEmail / EmailServiceMock');
+    return;
+  }
 
+  async sendPasswordRecoveryCode(email: string, code: string) {
     return;
   }
 }

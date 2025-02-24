@@ -10,18 +10,6 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    // const isProduction = process.env.NODE_ENV === 'production';
-
-    // if (isProduction && status === HttpStatus.INTERNAL_SERVER_ERROR) {
-    //   response.status(status).json({
-    //     ...this.getDefaultHttpBody(exception),
-    //     path: null,
-    //     message: 'Some error occurred',
-    //   });
-
-    //   return;
-    // }
-
     response.status(status).json(this.getDefaultHttpBody(exception));
   }
 }

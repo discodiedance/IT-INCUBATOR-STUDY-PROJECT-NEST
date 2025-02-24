@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { EmailService } from './email.service';
+import { NotificationsService } from './notifications.service';
 import { GMAIL_COM_PASS } from '../../config';
 
 @Module({
@@ -20,7 +20,7 @@ import { GMAIL_COM_PASS } from '../../config';
       },
     }),
   ],
-  providers: [EmailService],
-  exports: [EmailService],
+  providers: [NotificationsService],
+  exports: [NotificationsService],
 })
 export class NotificationsModule {}

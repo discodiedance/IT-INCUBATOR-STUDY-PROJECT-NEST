@@ -1,0 +1,4 @@
+import { JWT_SECRET, REFRESH_SECRET } from '../../../../config';
+
+export const ACCESS_TOKEN_STRATEGY_INJECT_TOKEN = Symbol(JWT_SECRET);
+export const REFRESH_TOKEN_STRATEGY_INJECT_TOKEN = Symbol(REFRESH_SECRET);
