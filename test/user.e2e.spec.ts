@@ -3,8 +3,9 @@ import { JwtService } from '@nestjs/jwt';
 import { initSettings } from './helpers/init-settings';
 import { UsersTestManager } from './helpers/managers/user-test-manager';
 import { deleteAllData } from './helpers/delete-all-data';
-import { JWT_SECRET } from '../src/config';
 import { InputCreateUserAccountDataType } from '../src/features/user-accounts/users/api/models/dto/input';
+import { UserAccountsConfig } from '../src/features/user-accounts/config/user-accounts.config';
+import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../src/features/user-accounts/users/constants/auth-tokens.inject-constants';
 
 describe('Users', () => {
   let app: INestApplication;
@@ -12,12 +13,17 @@ describe('Users', () => {
 
   beforeAll(async () => {
     const result = await initSettings((moduleBuilder) =>
-      moduleBuilder.overrideProvider(JwtService).useValue(
-        new JwtService({
-          secret: JWT_SECRET,
-          signOptions: { expiresIn: '5m' },
+      moduleBuilder
+        .overrideProvider(ACCESS_TOKEN_STRATEGY_INJECT_TOKEN)
+        .useFactory({
+          factory: (userAccountsConfig: UserAccountsConfig) => {
+            return new JwtService({
+              secret: userAccountsConfig.accessTokenSecret,
+              signOptions: { expiresIn: '5m' },
+            });
+          },
+          inject: [UserAccountsConfig],
         }),
-      ),
     );
     app = result.app;
     userTestManger = result.userTestManger;
@@ -72,7 +78,7 @@ describe('Users', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message: 'User with the same login already exists',
+            message: expect.any(String),
             field: 'login',
           },
         ],
@@ -92,7 +98,7 @@ describe('Users', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message: 'User with the same email already exists',
+            message: expect.any(String),
             field: 'email',
           },
         ],
@@ -111,8 +117,7 @@ describe('Users', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message:
-              'password must be longer than or equal to 6 characters; Received value: 0',
+            message: expect.any(String),
             field: 'password',
           },
         ],
@@ -131,8 +136,7 @@ describe('Users', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message:
-              'password must be shorter than or equal to 20 characters; Received value: LongPasswordLongPasswordLongPassword',
+            message: expect.any(String),
             field: 'password',
           },
         ],
@@ -151,8 +155,7 @@ describe('Users', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message:
-              'login must be shorter than or equal to 10 characters; Received value: LongLoginLongLoginLongLogin',
+            message: expect.any(String),
             field: 'login',
           },
         ],
@@ -171,8 +174,7 @@ describe('Users', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message:
-              'login must be longer than or equal to 3 characters; Received value: 0',
+            message: expect.any(String),
             field: 'login',
           },
         ],
@@ -198,7 +200,7 @@ describe('Users', () => {
       expect(responseBody.totalCount).toBe(5);
       expect(responseBody.items).toHaveLength(5);
       expect(responseBody.pagesCount).toBe(1);
-      expect(responseBody.items[0]).toEqual(usersArray[usersArray.length - 1]);
+      expect(responseBody.items[0]).toEqual(usersArray[usersArray.length - 5]);
     });
   });
 

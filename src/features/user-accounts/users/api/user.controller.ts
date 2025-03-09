@@ -13,16 +13,14 @@ import {
 import { InputCreateUserAccountDataType } from './models/dto/input';
 import { OutputUserType } from './models/dto/output';
 import { ApiBasicAuth, ApiParam } from '@nestjs/swagger';
-import { SkipThrottle } from '@nestjs/throttler';
 import { BasicAuthGuard } from '../../../../core/guards/basic/basic-auth.guard';
 import { PaginatedViewDto } from '../../../../core/dto/base.paginated.view-dto';
 import { CreateUserCommand } from '../application/usecases/create-user.usecase';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { DeleteUserCommand } from '../application/usecases/delete-user.usecase';
-import { GetAllUsersCommand } from '../application/usecases/query-user-usecases.ts/get-all-users-usecase';
 import { GetUsersQueryParams } from './models/dto/users.dto';
+import { GetAllUsersCommand } from '../application/usecases/query-user-usecases/get-all-users-usecase';
 
-@SkipThrottle()
 @Controller('users')
 @UseGuards(BasicAuthGuard)
 @ApiBasicAuth('basicAuth')

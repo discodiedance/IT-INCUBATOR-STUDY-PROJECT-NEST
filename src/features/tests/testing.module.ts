@@ -25,11 +25,16 @@ import {
   User,
   UserSchema,
 } from '../user-accounts/users/application/user.entity';
+import {
+  Device,
+  DeviceSchema,
+} from '../user-accounts/security/application/security-device.entity';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
+      { name: Device.name, schema: DeviceSchema },
       { name: Blog.name, schema: BlogSchema },
       { name: Post.name, schema: PostSchema },
       { name: Comment.name, schema: CommentSchema },

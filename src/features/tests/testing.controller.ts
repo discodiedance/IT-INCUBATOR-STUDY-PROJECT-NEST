@@ -12,10 +12,13 @@ import { UserModelType } from '../user-accounts/users/api/models/user.enitities'
 import { User } from '../user-accounts/users/application/user.entity';
 import { Comment } from '../bloggers-platform/comments/application/comment.entity';
 import { Post } from '../bloggers-platform/posts/application/post.entity';
+import { Device } from '../user-accounts/security/application/security-device.entity';
+import { DeviceModelType } from '../user-accounts/security/api/models/device.entities';
 
 @Controller('testing')
 export class TestingController {
   constructor(
+    @InjectModel(Device.name) private DeviceModel: DeviceModelType,
     @InjectModel(User.name) private UserModel: UserModelType,
     @InjectModel(Blog.name) private BlogModel: BlogModelType,
     @InjectModel(Post.name) private PostModel: PostModelType,
@@ -34,5 +37,6 @@ export class TestingController {
     await this.CommentModel.deleteMany({});
     await this.CommentLikesModel.deleteMany({});
     await this.PostLikesModel.deleteMany({});
+    await this.DeviceModel.deleteMany({});
   }
 }

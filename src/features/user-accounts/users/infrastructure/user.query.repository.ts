@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { UserModelType } from '../api/models/user.enitities';
 import { userMapper } from '../application/mappers/user.mapper';
 import { User } from '../application/user.entity';
-import { OutputUserType } from '../api/models/dto/output';
+import { OutputMeType, OutputUserType } from '../api/models/dto/output';
 import { FilterQuery } from 'mongoose';
 import { PaginatedViewDto } from '../../../../core/dto/base.paginated.view-dto';
 import { NotFoundDomainException } from '../../../../core/exceptions/domain-exceptions';
@@ -38,9 +38,9 @@ export class QueryUserRepository {
     }
 
     const users = await this.UserModel.find(filter)
-      .sort({ ['accountData' + query.sortBy]: query.sortDirection })
+      .sort({ [query.sortBy]: query.sortDirection ?? 'desc' })
       .skip(query.calculateSkip())
-      .limit(query.pageSize)
+      .limit(query.pageSize ?? 10)
       .lean();
 
     const totalCount = await this.UserModel.countDocuments(filter);
@@ -50,19 +50,19 @@ export class QueryUserRepository {
     return PaginatedViewDto.mapToView({
       items,
       totalCount,
-      page: query.pageNumber,
-      size: query.pageSize,
+      page: query.pageNumber ?? 1,
+      size: query.pageSize ?? 10,
     });
   }
 
-  async getMe(userId: string): Promise<OutputUserType> {
+  async getMe(userId: string): Promise<OutputMeType> {
     const user = await this.userRepository.findOrNotFoundFail(userId);
 
     if (!user) {
       throw NotFoundDomainException.create();
     }
 
-    return OutputUserType.mapToView(user);
+    return OutputMeType.mapToView(user);
   }
 
   async getById(id: string): Promise<OutputUserType | null> {

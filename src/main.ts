@@ -1,11 +1,23 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { appSetup } from './settings/app-setup';
+import { CoreConfig } from './core/core.config';
+import { initAppModule } from './init-app-module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  appSetup(app);
-  await app.listen(3000);
-  console.log(`Application is running on: ${await app.getUrl()}`);
+  const DynamicAppModule = await initAppModule();
+
+  const app = await NestFactory.create(DynamicAppModule);
+
+  const coreConfig = app.get<CoreConfig>(CoreConfig);
+
+  appSetup(app, coreConfig, DynamicAppModule);
+
+  const port = coreConfig.port;
+
+  await app.listen(port, () => {
+    console.log('App starting listen port: ', port);
+    console.log('NODE_ENV: ', coreConfig.env);
+  });
 }
+
 bootstrap();

@@ -1,13 +1,9 @@
-import { Type } from 'class-transformer';
-
 class PaginationParams {
-  @Type(() => Number)
-  pageNumber: number = 1;
-  @Type(() => Number)
-  pageSize: number = 10;
+  pageNumber: number | null = 1;
+  pageSize: number | null = 10;
 
   calculateSkip() {
-    return (this.pageNumber - 1) * this.pageSize;
+    return ((this.pageNumber ?? 1) - 1) * (this.pageSize ?? 10);
   }
 }
 

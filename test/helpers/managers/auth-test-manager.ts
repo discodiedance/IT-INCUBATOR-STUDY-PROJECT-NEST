@@ -10,6 +10,7 @@ import {
 import { OutputUserType } from '../../../src/features/user-accounts/users/api/models/dto/output';
 import { GLOBAL_PREFIX } from '../../../src/settings/glolbal-prefix.setup';
 import { UsersTestManager } from './user-test-manager';
+import { v4 } from 'uuid';
 
 export class AuthTestManager {
   constructor(
@@ -19,10 +20,28 @@ export class AuthTestManager {
 
   async login(
     loginData: InputLoginDataType,
+    title?: string,
     statusCode: number = HttpStatus.OK,
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/login`)
+      .send(loginData)
+      .set('user-agent', title ?? 'Test')
+      .set('X-Forwarded-For', v4())
+      .expect(statusCode);
+
+    return response;
+  }
+
+  async loginWithTooManyRequests(
+    loginData: InputLoginDataType,
+    ip: string,
+    statusCode: number = HttpStatus.TOO_MANY_REQUESTS,
+  ) {
+    const response = await request(this.app.getHttpServer())
+      .post(`/${GLOBAL_PREFIX}/auth/login`)
+      .set('user-agent', 'Test')
+      .set('X-Forwarded-For', ip)
       .send(loginData)
       .expect(statusCode);
 
@@ -35,6 +54,8 @@ export class AuthTestManager {
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/login`)
+      .set('user-agent', 'forWrongDataTest')
+      .set('X-Forwarded-For', v4())
       .send(loginModeL)
       .expect(statusCode);
 
@@ -47,6 +68,8 @@ export class AuthTestManager {
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/login`)
+      .set('user-agent', 'loginIncorrectDataTitle')
+      .set('X-Forwarded-For', v4())
       .send(loginModel)
       .expect(statusCode);
 
@@ -65,26 +88,14 @@ export class AuthTestManager {
     return response.body;
   }
 
-  async createAndLoginSeveralUsers(
-    count: number,
-  ): Promise<{ accessToken: string }[]> {
-    const users = await this.usersTestManager.createSeveralUsers(count);
-
-    const loginPromises = users.map((user: OutputUserType) =>
-      this.login({ loginOrEmail: user.login, password: '123456789' }).then(
-        (response) => ({ accessToken: response.body.accessToken }),
-      ),
-    );
-
-    return await Promise.all(loginPromises);
-  }
-
   async registrationUserWithIncorrectData(
     inputRegistrationData: Object,
     statusCode: number = HttpStatus.BAD_REQUEST,
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .set('user-agent', 'TestRegister')
+      .set('X-Forwarded-For', v4())
       .send(inputRegistrationData)
       .expect(statusCode);
 
@@ -97,6 +108,8 @@ export class AuthTestManager {
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .set('user-agent', 'TestRegister')
+      .set('X-Forwarded-For', v4())
       .send(inputRegistrationData)
       .expect(statusCode);
 
@@ -105,10 +118,13 @@ export class AuthTestManager {
 
   async registrationWithTooManyRequests(
     inputRegistrationData: InputCreateUserAccountDataType,
+    setIp: string,
     statusCode: number = HttpStatus.TOO_MANY_REQUESTS,
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .set('user-agent', 'TestRegister')
+      .set('X-Forwarded-For', setIp)
       .send(inputRegistrationData)
       .expect(statusCode);
 
@@ -122,6 +138,7 @@ export class AuthTestManager {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/registration-email-resending`)
       .send(inputRegistrationData)
+      .set('X-Forwarded-For', v4())
       .expect(statusCode);
 
     return response;
@@ -133,6 +150,7 @@ export class AuthTestManager {
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/registration-email-resending`)
+      .set('X-Forwarded-For', v4())
       .send(inputRegistrationData)
       .expect(statusCode);
 
@@ -141,10 +159,13 @@ export class AuthTestManager {
 
   async registrationEmailResendingWithTooManyRequests(
     inputRegistrationData: InputEmaillResendingDataType,
+    setIp: string,
     statusCode: number = HttpStatus.TOO_MANY_REQUESTS,
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/registration-email-resending`)
+      .set('user-agent', 'TestResend')
+      .set('X-Forwarded-For', setIp)
       .send(inputRegistrationData)
       .expect(statusCode);
 
@@ -157,6 +178,7 @@ export class AuthTestManager {
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/registration-confirmation`)
+      .set('X-Forwarded-For', v4())
       .send(confirmationData)
       .expect(statusCode);
 
@@ -181,6 +203,7 @@ export class AuthTestManager {
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/registration-confirmation`)
+      .set('X-Forwarded-For', v4())
       .send(confirmationCode)
       .expect(statusCode);
 
@@ -189,11 +212,14 @@ export class AuthTestManager {
 
   async confirmUserRegistrationWithTooManyRequests(
     confirmationData: InputEmailConfirmationDataType,
+    setIp: string,
     statusCode: number = HttpStatus.TOO_MANY_REQUESTS,
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/registration-confirmation`)
       .send(confirmationData)
+      .set('user-agent', 'TestConfirm')
+      .set('X-Forwarded-For', setIp)
       .expect(statusCode);
 
     return response;
@@ -217,6 +243,7 @@ export class AuthTestManager {
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/password-recovery`)
+      .set('X-Forwarded-For', v4())
       .send(inputPasswordRecoveryData)
       .expect(statusCode);
 
@@ -237,10 +264,13 @@ export class AuthTestManager {
 
   async passwordRecoveryWithTooManyRequests(
     inputPasswordRecoveryData: InputEmaillResendingDataType,
+    setIp: string,
     statusCode: number = HttpStatus.TOO_MANY_REQUESTS,
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/password-recovery`)
+      .set('user-agent', 'TestPasswordRecovery')
+      .set('X-Forwarded-For', setIp)
       .send(inputPasswordRecoveryData)
       .expect(statusCode);
 
@@ -253,6 +283,7 @@ export class AuthTestManager {
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/new-password`)
+      .set('X-Forwarded-For', v4())
       .send(inputConfirmNewPasswordData)
       .expect(statusCode);
 
@@ -265,6 +296,7 @@ export class AuthTestManager {
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/new-password`)
+      .set('X-Forwarded-For', v4())
       .send(inputConfirmNewPasswordData)
       .expect(statusCode);
 
@@ -273,20 +305,26 @@ export class AuthTestManager {
 
   async confirmNewPasswordWithTooManyRequests(
     inputConfirmNewPasswordData: InputNewPasswordDataType,
+    setIp: string,
     statusCode: number = HttpStatus.TOO_MANY_REQUESTS,
   ) {
     const response = await request(this.app.getHttpServer())
       .post(`/${GLOBAL_PREFIX}/auth/new-password`)
+      .set('user-agent', 'TestConfirmPasswordRecovery')
+      .set('X-Forwarded-For', setIp)
       .send(inputConfirmNewPasswordData)
       .expect(statusCode);
 
     return response;
   }
 
-  async getMeWithIncorrectData(statusCode: number = HttpStatus.UNAUTHORIZED) {
+  async getMeWithIncorrectData(
+    JWT: string,
+    statusCode: number = HttpStatus.UNAUTHORIZED,
+  ) {
     const response = await request(this.app.getHttpServer())
       .get(`/${GLOBAL_PREFIX}/auth/me`)
-      .set('Authorization', 'Bearer invalid_token')
+      .set('Authorization', 'Bearer' + JWT)
       .expect(statusCode);
 
     return response;
@@ -299,5 +337,155 @@ export class AuthTestManager {
       .expect(statusCode);
 
     return response;
+  }
+
+  async refreshTokens(
+    refreshToken: string,
+    statusCode: number = HttpStatus.OK,
+  ) {
+    const response = await request(this.app.getHttpServer())
+      .post(`/${GLOBAL_PREFIX}/auth/refresh-token`)
+      .set('Cookie', refreshToken)
+      .expect(statusCode);
+
+    return response;
+  }
+
+  async refreshTokensWithIncorrectAuth(
+    refreshToken: string,
+    statusCode: number = HttpStatus.UNAUTHORIZED,
+  ) {
+    const response = await request(this.app.getHttpServer())
+      .post(`/${GLOBAL_PREFIX}/auth/refresh-token`)
+      .set('Cookie', refreshToken)
+      .expect(statusCode);
+
+    return response;
+  }
+
+  async logoutWithIncorrectRefreshToken(
+    refreshToken: string,
+    statusCode: number = HttpStatus.UNAUTHORIZED,
+  ) {
+    const response = await request(this.app.getHttpServer())
+      .post(`/${GLOBAL_PREFIX}/auth/logout`)
+      .set('Cookie', refreshToken)
+      .expect(statusCode);
+
+    return response;
+  }
+
+  async logout(
+    refreshToken: string,
+    statusCode: number = HttpStatus.NO_CONTENT,
+  ) {
+    const response = await request(this.app.getHttpServer())
+      .post(`/${GLOBAL_PREFIX}/auth/logout`)
+      .set('Cookie', refreshToken)
+      .expect(statusCode);
+
+    return response;
+  }
+
+  async loginUserSeveralTimesWithTheSameIp(
+    loginData: InputLoginDataType,
+    count: number,
+    ip: string,
+    statusCode: number = HttpStatus.OK,
+  ) {
+    for (let i = 0; i < count; i++) {
+      await request(this.app.getHttpServer())
+        .post(`/${GLOBAL_PREFIX}/auth/login`)
+        .set('user-agent', 'Test')
+        .set('X-Forwarded-For', ip)
+        .send(loginData)
+        .expect(statusCode);
+    }
+  }
+
+  async registerSeveralUsersWithTheSameIp(
+    inputRegistrationData: InputCreateUserAccountDataType,
+    count: number,
+    ip: string,
+    statusCode: number = HttpStatus.NO_CONTENT,
+  ) {
+    for (let i = 0; i < count; i++) {
+      const uniqueBody: InputCreateUserAccountDataType = {
+        ...inputRegistrationData,
+        email: `${i + 1}_${inputRegistrationData.email}`,
+        login: `${i + 1}_${inputRegistrationData.login}`,
+      };
+
+      await request(this.app.getHttpServer())
+        .post(`/${GLOBAL_PREFIX}/auth/registration`)
+        .set('user-agent', 'TestRegister')
+        .set('X-Forwarded-For', ip)
+        .send(uniqueBody)
+        .expect(statusCode);
+    }
+  }
+
+  async confirmSeveralUsersRegistrationWithWrongDataWithTheSameIp(
+    confirmationCode: string,
+    count: number,
+    ip: string,
+    statusCode: number = HttpStatus.BAD_REQUEST,
+  ) {
+    for (let i = 0; i < count; i++) {
+      await request(this.app.getHttpServer())
+        .post(`/${GLOBAL_PREFIX}/auth/registration-confirmation`)
+        .set('user-agent', 'TestConfirm')
+        .set('X-Forwarded-For', ip)
+        .send({ confirmationCode })
+        .expect(statusCode);
+    }
+  }
+
+  async resendRegistrationEmailWithIncorrectDataWithTheSameIp(
+    inputResendEmailData: InputEmaillResendingDataType,
+    count: number,
+    ip: string,
+    statusCode: number = HttpStatus.BAD_REQUEST,
+  ) {
+    for (let i = 0; i < count; i++) {
+      await request(this.app.getHttpServer())
+        .post(`/${GLOBAL_PREFIX}/auth/registration-email-resending`)
+        .set('user-agent', 'TestResend')
+        .set('X-Forwarded-For', ip)
+        .send(inputResendEmailData)
+        .expect(statusCode);
+    }
+  }
+
+  async sendSeveralPasswordRecoveryEmailWithTheSameIp(
+    inputPasswordRecoveryData: InputEmaillResendingDataType,
+    count: number,
+    ip: string,
+    statusCode: number = HttpStatus.NO_CONTENT,
+  ) {
+    for (let i = 0; i < count; i++) {
+      await request(this.app.getHttpServer())
+        .post(`/${GLOBAL_PREFIX}/auth/password-recovery`)
+        .set('user-agent', 'TestPasswordRecovery')
+        .set('X-Forwarded-For', ip)
+        .send(inputPasswordRecoveryData)
+        .expect(statusCode);
+    }
+  }
+
+  async confirmSeveralPasswordRecoveryWithIncorrectDataWithTheSameIp(
+    inputConfirmNewPasswordData: Object,
+    count: number,
+    ip: string,
+    statusCode: number = HttpStatus.BAD_REQUEST,
+  ) {
+    for (let i = 0; i < count; i++) {
+      await request(this.app.getHttpServer())
+        .post(`/${GLOBAL_PREFIX}/auth/new-password`)
+        .set('user-agent', 'TestConfirmPasswordRecovery')
+        .set('X-Forwarded-For', ip)
+        .send(inputConfirmNewPasswordData)
+        .expect(statusCode);
+    }
   }
 }

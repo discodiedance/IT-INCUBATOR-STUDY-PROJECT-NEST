@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import {
   Body,
   Controller,
@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -17,7 +18,7 @@ import {
   InputEmailConfirmationDataType,
 } from '../../users/api/models/dto/input';
 import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { SkipThrottle, ThrottlerGuard } from '@nestjs/throttler';
 import { OutputUserType } from '../../users/api/models/dto/output';
 import { ExtractUserIdFromRequest } from '../../../../core/decorators/param/extract-user-from-request';
 import { JwtAuthGuard } from '../../../../core/guards/bearer/jwt-auth.guard';
@@ -30,15 +31,20 @@ import { NewPasswordConfirmationUserCommand } from '../application/usecases/new-
 import { RegistrationUserCommand } from '../application/usecases/register-user.usecase';
 import { AuthService } from '../application/auth.service';
 import { GetMeCommand } from '../application/usecases/query-auth-usecases/get-me.usecase';
+import { RefreshTokenGuard } from '../../../../core/guards/refresh/refresh-token.guard';
+import { UpdateTokensCommand } from '../application/usecases/update-tokens.usecase';
+import { LogoutUserCommand } from '../application/usecases/logout-user.usecase';
 
+@UseGuards(ThrottlerGuard)
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
-    private readonly AuthService: AuthService,
+    private readonly authService: AuthService,
   ) {}
 
+  @SkipThrottle()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('bearerAuth')
   @Get('me')
@@ -58,11 +64,17 @@ export class AuthController {
     },
   })
   async login(
-    @Body() inpuitLoginData: InputLoginDataType,
+    @Body()
+    inpuitLoginData: InputLoginDataType,
     @Res({ passthrough: true }) res: Response,
+    @Req() req: Request,
   ): Promise<{ accessToken: string }> {
-    const userId = await this.AuthService.validateUser(inpuitLoginData);
-    const tokens = await this.commandBus.execute(new LoginUserCommand(userId));
+    const ip = req.ip as string;
+    const title = req.headers['user-agent'] as string;
+    const userId = await this.authService.validateUser(inpuitLoginData);
+    const tokens = await this.commandBus.execute(
+      new LoginUserCommand(userId, ip, title),
+    );
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
@@ -72,7 +84,36 @@ export class AuthController {
     return { accessToken: tokens.accessToken };
   }
 
-  @UseGuards(ThrottlerGuard)
+  @SkipThrottle()
+  @UseGuards(RefreshTokenGuard)
+  @Post('refresh-token')
+  @HttpCode(200)
+  async refreshToken(
+    @Req() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ accessToken: string }> {
+    const tokens = await this.commandBus.execute(
+      new UpdateTokensCommand(req.user.userId, req.user.deviceId),
+    );
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: true,
+    });
+
+    return { accessToken: tokens.accessToken };
+  }
+
+  @SkipThrottle()
+  @UseGuards(RefreshTokenGuard)
+  @Post('logout')
+  @HttpCode(204)
+  async logout(@Req() req: any) {
+    await this.commandBus.execute(
+      new LogoutUserCommand(req.user.userId, req.user.deviceId),
+    );
+    return;
+  }
+
   @Post('registration')
   @HttpCode(204)
   @ApiBody({
@@ -90,7 +131,6 @@ export class AuthController {
     return;
   }
 
-  @UseGuards(ThrottlerGuard)
   @Post('registration-email-resending')
   @HttpCode(204)
   @ApiBody({
@@ -110,7 +150,6 @@ export class AuthController {
     return;
   }
 
-  @UseGuards(ThrottlerGuard)
   @Post('registration-confirmation')
   @HttpCode(204)
   @ApiBody({
@@ -130,7 +169,6 @@ export class AuthController {
     return;
   }
 
-  @UseGuards(ThrottlerGuard)
   @Post('password-recovery')
   @HttpCode(204)
   @ApiBody({
@@ -150,7 +188,6 @@ export class AuthController {
     return;
   }
 
-  @UseGuards(ThrottlerGuard)
   @Post('new-password')
   @HttpCode(204)
   @ApiBody({

@@ -1,9 +1,13 @@
-import { INestApplication } from '@nestjs/common';
+import { DynamicModule, INestApplication } from '@nestjs/common';
 import { useContainer } from 'class-validator';
-import { AppModule } from '../app.module';
 
-export function validationConstraintsSetup(app: INestApplication) {
-  useContainer(app.select(AppModule), {
+export function validationConstraintsSetup(
+  app: INestApplication,
+  DynamicAppModule: DynamicModule,
+) {
+  const appContext = app.select(DynamicAppModule);
+
+  useContainer(appContext, {
     fallbackOnErrors: true,
   });
 }

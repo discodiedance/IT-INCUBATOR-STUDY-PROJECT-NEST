@@ -1,7 +1,6 @@
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, TestingModuleBuilder } from '@nestjs/testing';
 import { Connection } from 'mongoose';
-import { AppModule } from '../../src/app.module';
 import { UsersTestManager } from './managers/user-test-manager';
 import { EmailServiceMock } from '../mock/email-service.mock';
 import { deleteAllData } from './delete-all-data';
@@ -11,12 +10,17 @@ import { AuthTestManager } from './managers/auth-test-manager';
 import { BlogTestManager } from './managers/blog-test-manager';
 import { PostTestManager } from './managers/post-test.manager';
 import { CommentTestManager } from './managers/comment-test.manager';
+import { initAppModule } from '../../src/init-app-module';
+import { CoreConfig } from '../../src/core/core.config';
+import { DevicesTestManager } from './managers/devices-test-manager';
 
 export const initSettings = async (
   addSettingsToModuleBuilder?: (moduleBuilder: TestingModuleBuilder) => void,
 ) => {
+  const DynamicAppModule = await initAppModule();
+
   const testingModuleBuilder: TestingModuleBuilder = Test.createTestingModule({
-    imports: [AppModule],
+    imports: [DynamicAppModule],
   })
     .overrideProvider(NotificationsService)
     .useClass(EmailServiceMock);
@@ -28,8 +32,8 @@ export const initSettings = async (
   const testingAppModule = await testingModuleBuilder.compile();
 
   const app = testingAppModule.createNestApplication();
-
-  appSetup(app);
+  const coreConfig = app.get<CoreConfig>(CoreConfig);
+  appSetup(app, coreConfig, DynamicAppModule);
 
   await app.init();
 
@@ -43,6 +47,10 @@ export const initSettings = async (
     app,
     app.get('CommentModel'),
   );
+  const devicesTestManager = new DevicesTestManager(
+    app,
+    app.get('DeviceModel'),
+  );
 
   await deleteAllData(app);
 
@@ -55,5 +63,6 @@ export const initSettings = async (
     blogTestManager,
     postTestManager,
     commentTestManager,
+    devicesTestManager,
   };
 };

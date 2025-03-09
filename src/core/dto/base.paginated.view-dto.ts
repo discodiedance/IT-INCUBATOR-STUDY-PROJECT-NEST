@@ -1,9 +1,9 @@
 export abstract class PaginatedViewDto<T> {
   abstract items: T;
-  totalCount: number;
-  pagesCount: number;
-  page: number;
-  pageSize: number;
+  totalCount: number | null;
+  pagesCount: number | null;
+  page: number | null;
+  pageSize: number | null;
 
   public static mapToView<T>(data: {
     items: T;
@@ -13,8 +13,8 @@ export abstract class PaginatedViewDto<T> {
   }): PaginatedViewDto<T> {
     return {
       pagesCount: Math.ceil(data.totalCount / data.size),
-      page: data.page,
-      pageSize: data.size,
+      page: data.page ?? 1,
+      pageSize: data.size ?? 10,
       totalCount: data.totalCount,
       items: data.items,
     };

@@ -1,6 +1,5 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { delay } from '../delay';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   InputCreateUserAccountDataType,
@@ -157,7 +156,6 @@ export class UsersTestManager {
     let usersArray: OutputUserType[] = [];
 
     for (let i = 0; i < count; ++i) {
-      await delay(50);
       const responseBody = await this.createUser({
         login: `test` + i,
         email: `test${i}@gmail.com`,
@@ -169,19 +167,19 @@ export class UsersTestManager {
     return usersArray;
   }
 
-  async createAndLoginSeveralUsers(
-    count: number,
-  ): Promise<{ accessToken: string }[]> {
-    const users = await this.createSeveralUsers(count);
+  // async createAndLoginSeveralUsers(
+  //   count: number,
+  // ): Promise<{ accessToken: string }[]> {
+  //   const users = await this.createSeveralUsers(count);
 
-    const loginPromises = users.map((user: OutputUserType) =>
-      this.login({ loginOrEmail: user.login, password: '123456789' }).then(
-        (response) => ({ accessToken: response.body.accessToken }),
-      ),
-    );
+  //   const loginPromises = users.map((user: OutputUserType) =>
+  //     this.login({ loginOrEmail: user.login, password: '123456789' }).then(
+  //       (response) => ({ accessToken: response.body.accessToken }),
+  //     ),
+  //   );
 
-    return await Promise.all(loginPromises);
-  }
+  //   return await Promise.all(loginPromises);
+  // }
 
   async getAllUsers(statusCode: number = HttpStatus.OK) {
     const response = await request(this.app.getHttpServer())

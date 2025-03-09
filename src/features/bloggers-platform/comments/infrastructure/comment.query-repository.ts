@@ -49,9 +49,9 @@ export class QueryCommentRepository {
     }
 
     const comments = await this.CommentModel.find(filter)
-      .sort({ [query.sortBy]: query.sortDirection })
+      .sort({ [query.sortBy]: query.sortDirection ?? 'desc' })
       .skip(query.calculateSkip())
-      .limit(query.pageSize)
+      .limit(query.pageSize ?? 10)
       .lean();
 
     const commentsWithStatuses = await Promise.all(
@@ -73,8 +73,8 @@ export class QueryCommentRepository {
     return PaginatedViewDto.mapToView({
       items,
       totalCount,
-      page: query.pageNumber,
-      size: query.pageSize,
+      page: query.pageNumber ?? 1,
+      size: query.pageSize ?? 10,
     });
   }
 }

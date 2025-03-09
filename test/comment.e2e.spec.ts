@@ -2,7 +2,6 @@ import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { initSettings } from './helpers/init-settings';
 import { CommentTestManager } from './helpers/managers/comment-test.manager';
-import { JWT_SECRET } from '../src/config';
 import { deleteAllData } from './helpers/delete-all-data';
 import { InputCreateUserAccountDataType } from '../src/features/user-accounts/users/api/models/dto/input';
 import { AuthTestManager } from './helpers/managers/auth-test-manager';
@@ -16,6 +15,8 @@ import {
   InputUpdateCommentDataType,
 } from '../src/features/bloggers-platform/comments/api/models/dto/input';
 import { InputCreateCommentLikeDataType } from '../src/features/bloggers-platform/likes/comments/api/models/dto/comment-likes.dto';
+import { UserAccountsConfig } from '../src/features/user-accounts/config/user-accounts.config';
+import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../src/features/user-accounts/users/constants/auth-tokens.inject-constants';
 
 describe('Comments', () => {
   let app: INestApplication;
@@ -27,12 +28,17 @@ describe('Comments', () => {
 
   beforeAll(async () => {
     const result = await initSettings((moduleBuilder) =>
-      moduleBuilder.overrideProvider(JwtService).useValue(
-        new JwtService({
-          secret: JWT_SECRET,
-          signOptions: { expiresIn: '5m' },
+      moduleBuilder
+        .overrideProvider(ACCESS_TOKEN_STRATEGY_INJECT_TOKEN)
+        .useFactory({
+          factory: (userAccountsConfig: UserAccountsConfig) => {
+            return new JwtService({
+              secret: userAccountsConfig.accessTokenSecret,
+              signOptions: { expiresIn: '5m' },
+            });
+          },
+          inject: [UserAccountsConfig],
         }),
-      ),
     );
     app = result.app;
     commentTestManager = result.commentTestManager;
@@ -79,7 +85,7 @@ describe('Comments', () => {
       content: 'goodContentToCommentForCreate',
     };
 
-    it('Register & login user 1', async () => {
+    it('Register and login user 1', async () => {
       const responseRegister = await authTestManager.registrationUser(goodUser);
       expect(responseRegister.status).toEqual(204);
       const user = await userTestManager.getUserByLogin(goodUser.login);
@@ -181,7 +187,7 @@ describe('Comments', () => {
       content: 'goodContentToCommentForCreate',
     };
 
-    it('Register & login users 1, 2', async () => {
+    it('Register and login users 1, 2', async () => {
       const responseRegister1 =
         await authTestManager.registrationUser(goodUser);
       expect(responseRegister1.status).toEqual(204);
@@ -375,7 +381,6 @@ describe('Comments', () => {
       await deleteAllData(app);
     });
 
-    let userId1: string;
     let user1JWT: string;
     let user2JWT: string;
     let blogId: string;
@@ -414,8 +419,6 @@ describe('Comments', () => {
       const responseRegister1 =
         await authTestManager.registrationUser(goodUser);
       expect(responseRegister1.status).toEqual(204);
-      const user = await userTestManager.getUserByLogin(goodUser.login);
-      userId1 = user!.id;
 
       const responseRegister2 =
         await authTestManager.registrationUser(goodUser2);
@@ -598,7 +601,7 @@ describe('Comments', () => {
       expect(response.status).toEqual(401);
     });
 
-    it("It should'nt like comment with not existing commentId", async () => {
+    it("It shouldn't like comment with not existing commentId", async () => {
       const body: InputCreateCommentLikeDataType = {
         likeStatus: 'Like',
       };

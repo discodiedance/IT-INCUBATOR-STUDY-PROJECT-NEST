@@ -12,7 +12,6 @@ import {
   Comment,
   CommentSchema,
 } from '../../../comments/application/comment.entity';
-import { CommentModule } from '../../../comments/comment.module';
 
 @Module({
   imports: [

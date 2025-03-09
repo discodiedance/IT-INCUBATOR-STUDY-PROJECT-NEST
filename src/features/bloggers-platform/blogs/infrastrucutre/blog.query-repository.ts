@@ -25,9 +25,9 @@ export class QueryBlogRepository {
     }
 
     const blogs = await this.BlogModel.find(filter)
-      .sort({ [query.sortBy]: query.sortDirection })
+      .sort({ [query.sortBy]: query.sortDirection ?? 'desc' })
       .skip(query.calculateSkip())
-      .limit(query.pageSize)
+      .limit(query.pageSize ?? 10)
       .lean();
 
     const totalCount = await this.BlogModel.countDocuments(filter);
@@ -37,8 +37,8 @@ export class QueryBlogRepository {
     return PaginatedViewDto.mapToView({
       items,
       totalCount,
-      page: query.pageNumber,
-      size: query.pageSize,
+      page: query.pageNumber ?? 1,
+      size: query.pageSize ?? 10,
     });
   }
 

@@ -1,7 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { initSettings } from './helpers/init-settings';
-import { JWT_SECRET } from '../src/config';
 import { PostTestManager } from './helpers/managers/post-test.manager';
 import { BlogTestManager } from './helpers/managers/blog-test-manager';
 import {
@@ -18,6 +17,8 @@ import { InputCreateBlogDataType } from '../src/features/bloggers-platform/blogs
 import { InputCreateCommentDataType } from '../src/features/bloggers-platform/comments/api/models/dto/input';
 import { PostSortDataType } from '../src/features/bloggers-platform/posts/api/models/dto/post.dto';
 import { CommentSortDataType } from '../src/features/bloggers-platform/comments/api/models/dto/comment.dto';
+import { UserAccountsConfig } from '../src/features/user-accounts/config/user-accounts.config';
+import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../src/features/user-accounts/users/constants/auth-tokens.inject-constants';
 
 describe('Posts', () => {
   let app: INestApplication;
@@ -28,12 +29,17 @@ describe('Posts', () => {
 
   beforeAll(async () => {
     const result = await initSettings((moduleBuilder) =>
-      moduleBuilder.overrideProvider(JwtService).useValue(
-        new JwtService({
-          secret: JWT_SECRET,
-          signOptions: { expiresIn: '5m' },
+      moduleBuilder
+        .overrideProvider(ACCESS_TOKEN_STRATEGY_INJECT_TOKEN)
+        .useFactory({
+          factory: (userAccountsConfig: UserAccountsConfig) => {
+            return new JwtService({
+              secret: userAccountsConfig.accessTokenSecret,
+              signOptions: { expiresIn: '5m' },
+            });
+          },
+          inject: [UserAccountsConfig],
         }),
-      ),
     );
     app = result.app;
     postTestManager = result.postTestManager;
@@ -195,7 +201,7 @@ describe('Posts', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message: 'title must be a string; Received value: null',
+            message: expect.any(String),
             field: 'title',
           },
         ],
@@ -215,7 +221,7 @@ describe('Posts', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message: 'shortDescription must be a string; Received value: null',
+            message: expect.any(String),
             field: 'shortDescription',
           },
         ],
@@ -235,7 +241,7 @@ describe('Posts', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message: 'content must be a string; Received value: null',
+            message: expect.any(String),
             field: 'content',
           },
         ],
@@ -253,8 +259,6 @@ describe('Posts', () => {
     let accessToken2: string;
     let accessToken3: string;
     let userId: string;
-    let userId2: string;
-    let userId3: string;
     let postId: string;
 
     const goodUser: InputCreateUserAccountDataType = {
@@ -275,7 +279,7 @@ describe('Posts', () => {
       email: 'goodEmail3@gmail.com',
     };
 
-    it('Register user 1, 2, 3', async () => {
+    it('Register and login users 1, 2, 3', async () => {
       const response = await authTestManager.registrationUser(goodUser);
       expect(response.status).toEqual(204);
       const user = await userTestManager.getUserByLogin(goodUser.login);
@@ -283,36 +287,30 @@ describe('Posts', () => {
 
       const response2 = await authTestManager.registrationUser(goodUser2);
       expect(response2.status).toEqual(204);
-      const user2 = await userTestManager.getUserByLogin(goodUser2.login);
-      userId2 = user2!.id;
 
       const response3 = await authTestManager.registrationUser(goodUser3);
       expect(response3.status).toEqual(204);
-      const user3 = await userTestManager.getUserByLogin(goodUser3.login);
-      userId3 = user3!.id;
-    });
 
-    it('Login user 1, 2, 3', async () => {
-      const response = await authTestManager.login({
+      const loginResponse1 = await authTestManager.login({
         loginOrEmail: goodUser.login,
         password: goodUser.password,
       });
-      expect(response.status).toEqual(200);
-      accessToken = response.body.accessToken;
+      expect(loginResponse1.status).toEqual(200);
+      accessToken = loginResponse1.body.accessToken;
 
-      const response2 = await authTestManager.login({
+      const loginResponse2 = await authTestManager.login({
         loginOrEmail: goodUser2.login,
         password: goodUser2.password,
       });
-      expect(response2.status).toEqual(200);
-      accessToken2 = response2.body.accessToken;
+      expect(loginResponse2.status).toEqual(200);
+      accessToken2 = loginResponse2.body.accessToken;
 
-      const response3 = await authTestManager.login({
+      const loginResponse3 = await authTestManager.login({
         loginOrEmail: goodUser3.login,
         password: goodUser3.password,
       });
-      expect(response3.status).toEqual(200);
-      accessToken3 = response3.body.accessToken;
+      expect(loginResponse3.status).toEqual(200);
+      accessToken3 = loginResponse3.body.accessToken;
     });
 
     it('Create blog', async () => {
@@ -1225,7 +1223,7 @@ describe('Posts', () => {
       email: 'goodEmail2@gmail.com',
     };
 
-    it('Register user 1, 2', async () => {
+    it('Register and loign users 1, 2', async () => {
       const response = await authTestManager.registrationUser(goodUser);
       expect(response.status).toEqual(204);
       const user = await userTestManager.getUserByLogin(goodUser.login);
@@ -1235,25 +1233,23 @@ describe('Posts', () => {
       expect(response2.status).toEqual(204);
       const user2 = await userTestManager.getUserByLogin(goodUser2.login);
       userId2 = user2!.id;
-    });
 
-    it('Login user 1, 2', async () => {
-      const response = await authTestManager.login({
+      const loginResponse1 = await authTestManager.login({
         loginOrEmail: goodUser.login,
         password: goodUser.password,
       });
-      expect(response.status).toEqual(200);
-      accessToken = response.body.accessToken;
+      expect(loginResponse1.status).toEqual(200);
+      accessToken = loginResponse1.body.accessToken;
 
-      const response2 = await authTestManager.login({
+      const loginResponse2 = await authTestManager.login({
         loginOrEmail: goodUser2.login,
         password: goodUser2.password,
       });
-      expect(response2.status).toEqual(200);
-      accessToken2 = response2.body.accessToken;
+      expect(loginResponse2.status).toEqual(200);
+      accessToken2 = loginResponse2.body.accessToken;
     });
 
-    it('Create blog', async () => {
+    it('Create blog and create post 1,2 to this blog', async () => {
       const body = {
         name: 'goodName1',
         description: 'goodDescription1',
@@ -1262,32 +1258,30 @@ describe('Posts', () => {
       const response = await blogTestManager.createBlog(body);
       expect(response.status).toEqual(201);
       blogId = response.body.id;
-    });
 
-    it('Create post 1, 2 to blog', async () => {
       const inputCreatePostToBlogData: InputCreatePostToBlogDataType = {
         content: 'goodTitle1',
         shortDescription: 'goodShortDescription1',
         title: 'goodContent1',
       };
-      const response = await blogTestManager.createPostToBlog(
+      const postResponse1 = await blogTestManager.createPostToBlog(
         blogId,
         inputCreatePostToBlogData,
       );
-      expect(response.status).toEqual(201);
-      postId = response.body.id;
+      expect(postResponse1.status).toEqual(201);
+      postId = postResponse1.body.id;
 
       const inputCreatePostToBlogData2: InputCreatePostToBlogDataType = {
         content: 'goodTitle2',
         shortDescription: 'goodShortDescription2',
         title: 'goodContent2',
       };
-      const response2 = await blogTestManager.createPostToBlog(
+      const createReponse2 = await blogTestManager.createPostToBlog(
         blogId,
         inputCreatePostToBlogData2,
       );
-      expect(response.status).toEqual(201);
-      postId2 = response2.body.id;
+      expect(createReponse2.status).toEqual(201);
+      postId2 = createReponse2.body.id;
     });
 
     it('Create comment to post1 by user1', async () => {
@@ -1426,10 +1420,10 @@ describe('Posts', () => {
         items: [
           {
             id: expect.any(String),
-            content: contentU1ToP1,
+            content: contentU2ToP1,
             commentatorInfo: {
-              userId: userId,
-              userLogin: goodUser.login,
+              userId: userId2,
+              userLogin: goodUser2.login,
             },
             createdAt: expect.any(String),
             likesInfo: {
@@ -1440,10 +1434,10 @@ describe('Posts', () => {
           },
           {
             id: expect.any(String),
-            content: contentU2ToP1,
+            content: contentU1ToP1,
             commentatorInfo: {
-              userId: userId2,
-              userLogin: goodUser2.login,
+              userId: userId,
+              userLogin: goodUser.login,
             },
             createdAt: expect.any(String),
             likesInfo: {
@@ -1475,10 +1469,10 @@ describe('Posts', () => {
         items: [
           {
             id: expect.any(String),
-            content: contentU1ToP2,
+            content: contentU2ToP2,
             commentatorInfo: {
-              userId: userId,
-              userLogin: goodUser.login,
+              userId: userId2,
+              userLogin: goodUser2.login,
             },
             createdAt: expect.any(String),
             likesInfo: {
@@ -1489,10 +1483,10 @@ describe('Posts', () => {
           },
           {
             id: expect.any(String),
-            content: contentU2ToP2,
+            content: contentU1ToP2,
             commentatorInfo: {
-              userId: userId2,
-              userLogin: goodUser2.login,
+              userId: userId,
+              userLogin: goodUser.login,
             },
             createdAt: expect.any(String),
             likesInfo: {

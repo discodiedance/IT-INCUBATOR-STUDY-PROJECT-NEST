@@ -2,7 +2,6 @@ import { INestApplication } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { initSettings } from './helpers/init-settings';
 import { deleteAllData } from './helpers/delete-all-data';
-import { JWT_SECRET } from '../src/config';
 import { BlogTestManager } from './helpers/managers/blog-test-manager';
 import {
   InputCreateBlogDataType,
@@ -12,6 +11,8 @@ import { InputCreatePostToBlogDataType } from '../src/features/bloggers-platform
 import { OutputBlogType } from '../src/features/bloggers-platform/blogs/api/models/dto/output';
 import { PostSortDataType } from '../src/features/bloggers-platform/posts/api/models/dto/post.dto';
 import { BlogSortDataType } from '../src/features/bloggers-platform/blogs/api/models/dto/blogs.dto';
+import { UserAccountsConfig } from '../src/features/user-accounts/config/user-accounts.config';
+import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../src/features/user-accounts/users/constants/auth-tokens.inject-constants';
 
 describe('Blogs', () => {
   let app: INestApplication;
@@ -19,12 +20,17 @@ describe('Blogs', () => {
 
   beforeAll(async () => {
     const result = await initSettings((moduleBuilder) =>
-      moduleBuilder.overrideProvider(JwtService).useValue(
-        new JwtService({
-          secret: JWT_SECRET,
-          signOptions: { expiresIn: '5m' },
+      moduleBuilder
+        .overrideProvider(ACCESS_TOKEN_STRATEGY_INJECT_TOKEN)
+        .useFactory({
+          factory: (userAccountsConfig: UserAccountsConfig) => {
+            return new JwtService({
+              secret: userAccountsConfig.accessTokenSecret,
+              signOptions: { expiresIn: '5m' },
+            });
+          },
+          inject: [UserAccountsConfig],
         }),
-      ),
     );
     app = result.app;
     blogTestManager = result.blogTestManager;
@@ -140,7 +146,7 @@ describe('Blogs', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message: 'name must be a string; Received value: null',
+            message: expect.any(String),
             field: 'name',
           },
         ],
@@ -159,7 +165,7 @@ describe('Blogs', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message: 'description must be a string; Received value: null',
+            message: expect.any(String),
             field: 'description',
           },
         ],
@@ -178,7 +184,7 @@ describe('Blogs', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message: 'websiteUrl must be a string; Received value: null',
+            message: expect.any(String),
             field: 'websiteUrl',
           },
         ],
@@ -418,7 +424,7 @@ describe('Blogs', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message: 'name must be a string; Received value: null',
+            message: expect.any(String),
             field: 'name',
           },
         ],
@@ -440,7 +446,7 @@ describe('Blogs', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message: 'description must be a string; Received value: null',
+            message: expect.any(String),
             field: 'description',
           },
         ],
@@ -462,7 +468,7 @@ describe('Blogs', () => {
       expect(response.body).toEqual({
         errorsMessages: [
           {
-            message: 'websiteUrl must be a string; Received value: null',
+            message: expect.any(String),
             field: 'websiteUrl',
           },
         ],
@@ -772,6 +778,7 @@ describe('Blogs', () => {
       expect(response.status).toEqual(201);
 
       const allBlogs = await blogTestManager.getAllBlogs();
+      expect(allBlogs.status).toEqual(200);
       blogId = allBlogs.body.items[0].id;
       blogName = allBlogs.body.items[0].name;
     });

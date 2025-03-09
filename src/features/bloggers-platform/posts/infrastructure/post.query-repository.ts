@@ -68,9 +68,9 @@ export class QueryPostRepository {
     }
 
     const posts = await this.PostModel.find(filter)
-      .sort({ [query.sortBy]: query.sortDirection })
+      .sort({ [query.sortBy]: query.sortDirection ?? 'desc' })
       .skip(query.calculateSkip())
-      .limit(query.pageSize)
+      .limit(query.pageSize ?? 10)
       .lean();
 
     const totalCount = await this.PostModel.countDocuments(filter);
@@ -99,8 +99,8 @@ export class QueryPostRepository {
     return PaginatedViewDto.mapToView({
       items,
       totalCount,
-      page: query.pageNumber,
-      size: query.pageSize,
+      page: query.pageNumber ?? 1,
+      size: query.pageSize ?? 10,
     });
   }
 }
