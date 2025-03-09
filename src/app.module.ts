@@ -14,7 +14,6 @@ import { configModule } from './config-dynamic.module';
 import { throttlerModule } from './core/guards/throttler/throttler.module';
 import { DevicesModule } from './features/user-accounts/security/security-devices.module';
 import { NotificationsModule } from './features/notifications/notifications.module';
-import { UserAccountsConfig } from './features/user-accounts/config/user-accounts.config';
 
 @Module({
   imports: [
